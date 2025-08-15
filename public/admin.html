@@ -1,0 +1,345 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Holy Vouch</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <a href="/" class="logo">Holy Vouch</a>
+                <ul class="nav-links">
+                    <li><a href="/dashboard">Dashboard</a></li>
+                    <li><a href="/admin">Admin</a></li>
+                    <li><a href="#" id="logoutBtn">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main style="padding: 2rem 0; min-height: 80vh;">
+        <div class="container">
+            <div class="card-header" style="margin-bottom: 2rem;">
+                <h1 class="card-title">Admin Panel</h1>
+                <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                    Manage users and monitor vouch activity
+                </p>
+            </div>
+
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-number" id="totalUsers">0</span>
+                    <span class="stat-label">Total Users</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="totalVouches">0</span>
+                    <span class="stat-label">Total Vouches</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="discordUsers">0</span>
+                    <span class="stat-label">Discord Users</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="emailUsers">0</span>
+                    <span class="stat-label">Email Users</span>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div style="margin: 2rem 0;">
+                <div style="display: flex; border-bottom: 1px solid var(--border-color);">
+                    <button class="tab-btn active" data-tab="users">Users</button>
+                    <button class="tab-btn" data-tab="vouches">Vouches</button>
+                </div>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="usersTab" class="tab-content active">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">User Management</h2>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="table" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Type</th>
+                                    <th>Vouches</th>
+                                    <th>Servers</th>
+                                    <th>Joined</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="6" class="text-center">Loading users...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vouches Tab -->
+            <div id="vouchesTab" class="tab-content">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Recent Vouches</h2>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table class="table" id="vouchesTable">
+                            <thead>
+                                <tr>
+                                    <th>From User</th>
+                                    <th>To User</th>
+                                    <th>Server ID</th>
+                                    <th>Timestamp</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="5" class="text-center">Loading vouches...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Tab functionality
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all tabs and content
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab + 'Tab').classList.add('active');
+            });
+        });
+
+        // Load admin data
+        async function loadAdminData() {
+            try {
+                // Check if user has admin access
+                const userResponse = await fetch('/api/user/me');
+                if (!userResponse.ok) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                const user = await userResponse.json();
+                if (!user.isAdmin) {
+                    window.location.href = '/dashboard';
+                    return;
+                }
+                
+                // Load stats and data
+                await Promise.all([
+                    loadStats(),
+                    loadUsers(),
+                    loadVouches()
+                ]);
+                
+            } catch (error) {
+                console.error('Error loading admin data:', error);
+                window.location.href = '/';
+            }
+        }
+
+        // Load admin stats
+        async function loadStats() {
+            try {
+                const [usersResponse, statsResponse] = await Promise.all([
+                    fetch('/api/admin/users'),
+                    fetch('/api/stats/global')
+                ]);
+                
+                const users = await usersResponse.json();
+                const stats = await statsResponse.json();
+                
+                document.getElementById('totalUsers').textContent = users.length;
+                document.getElementById('totalVouches').textContent = stats.totalVouches || 0;
+                document.getElementById('discordUsers').textContent = 
+                    users.filter(u => u.discordId).length;
+                document.getElementById('emailUsers').textContent = 
+                    users.filter(u => !u.discordId && u.email).length;
+                    
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        // Load users table
+        async function loadUsers() {
+            try {
+                const response = await fetch('/api/admin/users');
+                const users = await response.json();
+                
+                const tbody = document.querySelector('#usersTable tbody');
+                
+                if (users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-center">No users found</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                users.forEach(user => {
+                    const joinDate = new Date(user.createdAt).toLocaleDateString();
+                    const userType = user.discordId ? 'Discord' : 'Email';
+                    const serverCount = Object.keys(user.serverVouches || {}).length;
+                    
+                    html += `
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    ${user.avatar ? 
+                                        `<img src="https://cdn.discordapp.com/avatars/${user.discordId}/${user.avatar}.png?size=32" 
+                                              style="width: 32px; height: 32px; border-radius: 50%;" alt="Avatar">` :
+                                        '<div style="width: 32px; height: 32px; background: var(--bg-tertiary); border-radius: 50%;"></div>'
+                                    }
+                                    <div>
+                                        <div style="font-weight: 500;">${user.username}</div>
+                                        ${user.email ? `<div style="font-size: 0.8rem; color: var(--text-secondary);">${user.email}</div>` : ''}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span style="padding: 0.25rem 0.5rem; background: ${userType === 'Discord' ? '#5865f2' : 'var(--bg-tertiary)'}; 
+                                             color: white; border-radius: 4px; font-size: 0.8rem;">
+                                    ${userType}
+                                </span>
+                            </td>
+                            <td><span style="color: var(--accent-neon); font-weight: 600;">${user.vouchCount || 0}</span></td>
+                            <td>${serverCount}</td>
+                            <td style="color: var(--text-secondary);">${joinDate}</td>
+                            <td>
+                                <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;" 
+                                        onclick="viewUserProfile('${user.username}')">View</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading users:', error);
+                document.querySelector('#usersTable tbody').innerHTML = 
+                    '<tr><td colspan="6" class="text-center text-danger">Error loading users</td></tr>';
+            }
+        }
+
+        // Load vouches table
+        async function loadVouches() {
+            try {
+                const response = await fetch('/api/admin/vouches');
+                const vouches = await response.json();
+                
+                const tbody = document.querySelector('#vouchesTable tbody');
+                
+                if (vouches.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center">No vouches found</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                vouches.slice(0, 50).forEach(vouch => { // Show latest 50
+                    const timestamp = new Date(vouch.timestamp).toLocaleString();
+                    
+                    html += `
+                        <tr>
+                            <td style="font-family: monospace; color: var(--text-secondary);">${vouch.fromUserID.slice(0, 12)}...</td>
+                            <td style="font-family: monospace; color: var(--text-secondary);">${vouch.toUserID.slice(0, 12)}...</td>
+                            <td style="font-family: monospace; color: var(--text-secondary);">${vouch.serverID.slice(0, 12)}...</td>
+                            <td style="color: var(--text-secondary);">${timestamp}</td>
+                            <td>
+                                <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem;"
+                                        onclick="deleteVouch('${vouch._id}')">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                tbody.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading vouches:', error);
+                document.querySelector('#vouchesTable tbody').innerHTML = 
+                    '<tr><td colspan="5" class="text-center text-danger">Error loading vouches</td></tr>';
+            }
+        }
+
+        // View user profile
+        function viewUserProfile(username) {
+            window.open(`/u/${username}`, '_blank');
+        }
+
+        // Delete vouch (placeholder - would need API endpoint)
+        function deleteVouch(vouchId) {
+            if (confirm('Are you sure you want to delete this vouch?')) {
+                // This would require implementing a DELETE endpoint
+                console.log('Delete vouch:', vouchId);
+                alert('Delete functionality would be implemented here');
+            }
+        }
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await fetch('/auth/logout', { method: 'POST' });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        });
+
+        // Load admin data on page load
+        loadAdminData();
+    </script>
+
+    <style>
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 1rem 1.5rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-neon);
+            border-bottom-color: var(--accent-neon);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</body>
+</html>

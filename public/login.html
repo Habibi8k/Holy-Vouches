@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Holy Vouch</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <a href="/" class="logo">Holy Vouch</a>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main style="display: flex; align-items: center; justify-content: center; min-height: 80vh; padding: 2rem 0;">
+        <div class="container" style="max-width: 400px;">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h1 class="card-title">Welcome Back</h1>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem;">Sign in to your Holy Vouch account</p>
+                </div>
+
+                <!-- Discord Login -->
+                <a href="/auth/discord" class="btn btn-discord" style="width: 100%; margin-bottom: 2rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515a.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0a12.64 12.64 0 0 0-.617-1.25a.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057a19.9 19.9 0 0 0 5.993 3.03a.078.078 0 0 0 .084-.028a14.09 14.09 0 0 0 1.226-1.994a.076.076 0 0 0-.041-.106a13.107 13.107 0 0 1-1.872-.892a.077.077 0 0 1-.008-.128a10.2 10.2 0 0 0 .372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127a12.299 12.299 0 0 1-1.873.892a.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028a19.839 19.839 0 0 0 6.002-3.03a.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.956-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419c0-1.333.955-2.419 2.157-2.419c1.21 0 2.176 1.096 2.157 2.42c0 1.333-.946 2.418-2.157 2.418z"/>
+                    </svg>
+                    Continue with Discord
+                </a>
+
+                <div style="text-align: center; margin: 2rem 0; position: relative;">
+                    <span style="background: var(--bg-secondary); padding: 0 1rem; color: var(--text-secondary); position: relative; z-index: 1;">or</span>
+                    <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background: var(--border-color);"></div>
+                </div>
+
+                <!-- Email/Password Login -->
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" id="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" id="password" name="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+                </form>
+
+                <div class="text-center" style="margin-top: 2rem;">
+                    <p style="color: var(--text-secondary);">
+                        Don't have an account? 
+                        <a href="#" id="showRegister" style="color: var(--accent-neon); text-decoration: none;">Sign up</a>
+                    </p>
+                </div>
+
+                <!-- Registration Form (Hidden by default) -->
+                <form id="registerForm" style="display: none;">
+                    <div class="form-group">
+                        <label for="regUsername" class="form-label">Username</label>
+                        <input type="text" id="regUsername" name="username" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regEmail" class="form-label">Email</label>
+                        <input type="email" id="regEmail" name="email" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword" class="form-label">Password</label>
+                        <input type="password" id="regPassword" name="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+                </form>
+
+                <div id="registerLink" class="text-center" style="margin-top: 2rem; display: none;">
+                    <p style="color: var(--text-secondary);">
+                        Already have an account? 
+                        <a href="#" id="showLogin" style="color: var(--accent-neon); text-decoration: none;">Sign in</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const showRegister = document.getElementById('showRegister');
+        const showLogin = document.getElementById('showLogin');
+        const registerLink = document.getElementById('registerLink');
+
+        // Toggle between login and register forms
+        showRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            registerForm.style.display = 'block';
+            registerLink.style.display = 'block';
+            showRegister.parentElement.style.display = 'none';
+        });
+
+        showLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+            registerLink.style.display = 'none';
+            showRegister.parentElement.style.display = 'block';
+        });
+
+        // Handle login form submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(loginForm);
+            
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: formData.get('email'),
+                        password: formData.get('password')
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = result.redirect;
+                } else {
+                    alert(result.error || 'Login failed');
+                }
+            } catch (error) {
+                alert('Login failed. Please try again.');
+            }
+        });
+
+        // Handle registration form submission
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(registerForm);
+            
+            try {
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: formData.get('username'),
+                        email: formData.get('email'),
+                        password: formData.get('password')
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    window.location.href = result.redirect;
+                } else {
+                    alert(result.error || 'Registration failed');
+                }
+            } catch (error) {
+                alert('Registration failed. Please try again.');
+            }
+        });
+    </script>
+</body>
+</html>

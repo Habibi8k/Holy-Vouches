@@ -1,0 +1,237 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Holy Vouch</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <a href="/" class="logo">Holy Vouch</a>
+                <ul class="nav-links">
+                    <li><a href="/dashboard">Dashboard</a></li>
+                    <li><a href="#" id="logoutBtn">Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main style="padding: 2rem 0; min-height: 80vh;">
+        <div class="container">
+            <!-- User Profile Header -->
+            <div class="profile-header">
+                <img id="userAvatar" class="profile-avatar" src="" alt="User Avatar">
+                <div class="profile-info">
+                    <h2 id="userName">Loading...</h2>
+                    <p id="userStats">Loading stats...</p>
+                </div>
+                <div style="margin-left: auto;">
+                    <a href="#" class="btn btn-primary" id="inviteBotBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        Invite Bot
+                    </a>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-number" id="totalVouches">0</span>
+                    <span class="stat-label">Total Vouches</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="serverCount">0</span>
+                    <span class="stat-label">Active Servers</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="globalVouches">0</span>
+                    <span class="stat-label">Global Vouches</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="globalUsers">0</span>
+                    <span class="stat-label">Total Users</span>
+                </div>
+            </div>
+
+            <!-- Dashboard Grid -->
+            <div class="dashboard-grid">
+                <!-- Server Vouches -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Server Vouches</h3>
+                    </div>
+                    <div id="serverVouches">
+                        <p class="text-center" style="color: var(--text-secondary);">Loading server vouches...</p>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Recent Global Activity</h3>
+                    </div>
+                    <div id="recentActivity">
+                        <p class="text-center" style="color: var(--text-secondary);">Loading recent activity...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Public Profile Link -->
+            <div class="card" style="margin-top: 2rem;">
+                <div class="card-header">
+                    <h3 class="card-title">Your Public Profile</h3>
+                </div>
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    Share your vouch profile with others:
+                </p>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <input type="text" id="profileLink" class="form-control" readonly style="flex: 1;">
+                    <button class="btn btn-secondary" onclick="copyProfileLink()">Copy Link</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let currentUser = null;
+
+        // Load user data and dashboard
+        async function loadDashboard() {
+            try {
+                // Get current user
+                const userResponse = await fetch('/api/user/me');
+                if (!userResponse.ok) {
+                    window.location.href = '/login';
+                    return;
+                }
+                
+                currentUser = await userResponse.json();
+                
+                // Update UI with user data
+                document.getElementById('userName').textContent = currentUser.username;
+                document.getElementById('userAvatar').src = currentUser.avatar 
+                    ? `https://cdn.discordapp.com/avatars/${currentUser.discordId}/${currentUser.avatar}.png?size=128`
+                    : '/default-avatar.png';
+                
+                document.getElementById('totalVouches').textContent = currentUser.vouchCount || 0;
+                document.getElementById('serverCount').textContent = Object.keys(currentUser.serverVouches || {}).length;
+                
+                // Set profile link
+                document.getElementById('profileLink').value = `${window.location.origin}/u/${currentUser.username}`;
+                
+                // Load server vouches
+                loadServerVouches();
+                
+                // Load global stats
+                loadGlobalStats();
+                
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                window.location.href = '/login';
+            }
+        }
+
+        // Load server-specific vouches
+        function loadServerVouches() {
+            const serverVouchesDiv = document.getElementById('serverVouches');
+            const serverVouches = currentUser.serverVouches || {};
+            
+            if (Object.keys(serverVouches).length === 0) {
+                serverVouchesDiv.innerHTML = '<p style="color: var(--text-secondary);">No server vouches yet. Invite the bot to start tracking!</p>';
+                return;
+            }
+            
+            let html = '';
+            for (const [serverId, count] of Object.entries(serverVouches)) {
+                html += `
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                        <span style="color: var(--text-secondary);">Server ${serverId.slice(0, 8)}...</span>
+                        <span style="color: var(--accent-neon); font-weight: 600;">${count} vouches</span>
+                    </div>
+                `;
+            }
+            serverVouchesDiv.innerHTML = html;
+        }
+
+        // Load global stats and recent activity
+        async function loadGlobalStats() {
+            try {
+                const response = await fetch('/api/stats/global');
+                const stats = await response.json();
+                
+                document.getElementById('globalVouches').textContent = stats.totalVouches || 0;
+                document.getElementById('globalUsers').textContent = stats.totalUsers || 0;
+                
+                // Load recent activity
+                const recentDiv = document.getElementById('recentActivity');
+                if (stats.recentVouches && stats.recentVouches.length > 0) {
+                    let html = '';
+                    stats.recentVouches.slice(0, 5).forEach(vouch => {
+                        const timeAgo = new Date(vouch.timestamp).toLocaleDateString();
+                        html += `
+                            <div style="padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                                <p style="margin: 0; color: var(--text-secondary); font-size: 0.9rem;">
+                                    New vouch received • ${timeAgo}
+                                </p>
+                            </div>
+                        `;
+                    });
+                    recentDiv.innerHTML = html;
+                } else {
+                    recentDiv.innerHTML = '<p style="color: var(--text-secondary);">No recent activity</p>';
+                }
+                
+            } catch (error) {
+                console.error('Error loading global stats:', error);
+            }
+        }
+
+        // Copy profile link
+        function copyProfileLink() {
+            const profileLink = document.getElementById('profileLink');
+            profileLink.select();
+            document.execCommand('copy');
+            
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.textContent = 'Copied!';
+            btn.style.background = 'var(--success)';
+            
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.style.background = '';
+            }, 2000);
+        }
+
+        // Invite bot functionality
+        document.getElementById('inviteBotBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            const botInviteUrl = `https://discord.com/api/oauth2/authorize?client_id=YOUR_BOT_CLIENT_ID&permissions=8&scope=bot%20applications.commands`;
+            window.open(botInviteUrl, '_blank');
+        });
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            try {
+                await fetch('/auth/logout', { method: 'POST' });
+                window.location.href = '/';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        });
+
+        // Load dashboard on page load
+        loadDashboard();
+    </script>
+</body>
+</html>

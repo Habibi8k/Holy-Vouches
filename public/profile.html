@@ -1,0 +1,246 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile - Holy Vouch</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-content">
+                <a href="/" class="logo">Holy Vouch</a>
+                <ul class="nav-links">
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/login">Login</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main style="padding: 2rem 0; min-height: 80vh;">
+        <div class="container" style="max-width: 800px;">
+            <!-- Profile Header -->
+            <div class="profile-header">
+                <img id="userAvatar" class="profile-avatar" src="" alt="User Avatar">
+                <div class="profile-info">
+                    <h1 id="userName">Loading...</h1>
+                    <p id="userStats" style="color: var(--text-secondary);">Loading stats...</p>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-number" id="totalVouches">0</span>
+                    <span class="stat-label">Total Vouches</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="serverCount">0</span>
+                    <span class="stat-label">Active Servers</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="trustScore">0</span>
+                    <span class="stat-label">Trust Score</span>
+                </div>
+            </div>
+
+            <!-- Server Vouches Breakdown -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Server Vouches</h2>
+                    <p style="color: var(--text-secondary); margin-top: 0.5rem;">
+                        Vouches received across different Discord servers
+                    </p>
+                </div>
+                <div id="serverVouches">
+                    <p class="text-center" style="color: var(--text-secondary);">Loading server vouches...</p>
+                </div>
+            </div>
+
+            <!-- Trust Badge -->
+            <div class="card text-center">
+                <div class="card-header">
+                    <h3 class="card-title">Trust Badge</h3>
+                </div>
+                <div id="trustBadge" style="padding: 2rem;">
+                    <div style="width: 100px; height: 100px; margin: 0 auto 1rem; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: white;" id="badgeCircle">
+                        0
+                    </div>
+                    <p id="badgeText" style="color: var(--text-secondary);">Loading trust level...</p>
+                </div>
+            </div>
+
+            <!-- Get Started Section -->
+            <div class="card text-center">
+                <div class="card-header">
+                    <h3 class="card-title">Want to track vouches for your server?</h3>
+                </div>
+                <p style="color: var(--text-secondary); margin-bottom: 2rem;">
+                    Add Holy Vouch to your Discord server and start building trust in your community.
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <a href="#" class="btn btn-primary" id="inviteBotBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        Invite Bot
+                    </a>
+                    <a href="/login" class="btn btn-secondary">Get Started</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Get username from URL
+        const pathParts = window.location.pathname.split('/');
+        const username = pathParts[pathParts.length - 1];
+
+        // Load user profile data
+        async function loadProfile() {
+            try {
+                const response = await fetch(`/api/user/${username}`);
+                
+                if (!response.ok) {
+                    document.querySelector('main').innerHTML = `
+                        <div class="container text-center" style="padding: 4rem 0;">
+                            <h1>User Not Found</h1>
+                            <p style="color: var(--text-secondary); margin: 1rem 0;">
+                                The user "${username}" could not be found.
+                            </p>
+                            <a href="/" class="btn btn-primary">Go Home</a>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const user = await response.json();
+                
+                // Update page title
+                document.title = `${user.username} - Holy Vouch`;
+                
+                // Update profile info
+                document.getElementById('userName').textContent = user.username;
+                document.getElementById('userAvatar').src = user.avatar 
+                    ? `https://cdn.discordapp.com/avatars/${user.discordId}/${user.avatar}.png?size=128`
+                    : '/default-avatar.png';
+                
+                const totalVouches = user.vouchCount || 0;
+                const serverCount = Object.keys(user.serverVouches || {}).length;
+                
+                document.getElementById('totalVouches').textContent = totalVouches;
+                document.getElementById('serverCount').textContent = serverCount;
+                document.getElementById('trustScore').textContent = Math.floor(totalVouches * 1.2);
+                
+                document.getElementById('userStats').textContent = 
+                    `${totalVouches} total vouches across ${serverCount} servers`;
+                
+                // Load server vouches
+                loadServerVouches(user.serverVouches || {});
+                
+                // Update trust badge
+                updateTrustBadge(totalVouches);
+                
+            } catch (error) {
+                console.error('Error loading profile:', error);
+                document.querySelector('main').innerHTML = `
+                    <div class="container text-center" style="padding: 4rem 0;">
+                        <h1>Error Loading Profile</h1>
+                        <p style="color: var(--text-secondary); margin: 1rem 0;">
+                            There was an error loading this profile. Please try again later.
+                        </p>
+                        <a href="/" class="btn btn-primary">Go Home</a>
+                    </div>
+                `;
+            }
+        }
+
+        // Load server vouches breakdown
+        function loadServerVouches(serverVouches) {
+            const serverVouchesDiv = document.getElementById('serverVouches');
+            
+            if (Object.keys(serverVouches).length === 0) {
+                serverVouchesDiv.innerHTML = `
+                    <div class="text-center" style="padding: 2rem; color: var(--text-secondary);">
+                        <p>No server vouches yet.</p>
+                        <p style="font-size: 0.9rem;">This user hasn't received any vouches from Discord servers.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Sort servers by vouch count
+            const sortedServers = Object.entries(serverVouches)
+                .sort(([,a], [,b]) => b - a);
+            
+            let html = '';
+            sortedServers.forEach(([serverId, count], index) => {
+                const percentage = (count / Object.values(serverVouches).reduce((a, b) => a + b, 0)) * 100;
+                html += `
+                    <div style="margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span style="color: var(--text-secondary);">Server ${serverId.slice(0, 8)}...</span>
+                            <span style="color: var(--accent-neon); font-weight: 600;">${count} vouches</span>
+                        </div>
+                        <div style="background: var(--bg-tertiary); border-radius: 4px; height: 8px; overflow: hidden;">
+                            <div style="background: linear-gradient(135deg, var(--accent-neon), var(--accent-purple)); height: 100%; width: ${percentage}%; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            serverVouchesDiv.innerHTML = html;
+        }
+
+        // Update trust badge based on vouch count
+        function updateTrustBadge(vouchCount) {
+            const badgeCircle = document.getElementById('badgeCircle');
+            const badgeText = document.getElementById('badgeText');
+            
+            let level, color, text;
+            
+            if (vouchCount >= 50) {
+                level = 'ELITE';
+                color = 'linear-gradient(135deg, #FFD700, #FFA500)';
+                text = 'Elite Trusted Seller';
+            } else if (vouchCount >= 25) {
+                level = 'HIGH';
+                color = 'linear-gradient(135deg, var(--accent-purple), #8b5cf6)';
+                text = 'Highly Trusted Seller';
+            } else if (vouchCount >= 10) {
+                level = 'MID';
+                color = 'linear-gradient(135deg, var(--accent-neon), #00cc7a)';
+                text = 'Trusted Seller';
+            } else if (vouchCount >= 5) {
+                level = 'LOW';
+                color = 'linear-gradient(135deg, #4ade80, #22c55e)';
+                text = 'Emerging Seller';
+            } else {
+                level = 'NEW';
+                color = 'linear-gradient(135deg, #6b7280, #9ca3af)';
+                text = 'New Seller';
+            }
+            
+            badgeCircle.style.background = color;
+            badgeCircle.textContent = vouchCount;
+            badgeText.textContent = text;
+        }
+
+        // Invite bot functionality
+        document.getElementById('inviteBotBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            const botInviteUrl = `https://discord.com/api/oauth2/authorize?client_id=YOUR_BOT_CLIENT_ID&permissions=8&scope=bot%20applications.commands`;
+            window.open(botInviteUrl, '_blank');
+        });
+
+        // Load profile on page load
+        loadProfile();
+    </script>
+</body>
+</html>
