@@ -1,0 +1,18 @@
+# Discord OAuth
+CLIENT_ID=1114261518469570711
+CLIENT_SECRET=064OsaY2xjDr9aOW0OLRmr--_xTC4wfn
+DISCORD_CLIENT_ID=1114261518469570711
+DISCORD_CLIENT_SECRET=064OsaY2xjDr9aOW0OLRmr--_xTC4wfn
+REDIRECT_URI=https://your-website-url.com/auth/discord/callback
+
+# MongoDB
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/holyvouch?retryWrites=true&w=majority
+
+# JWT Secret
+JWT_SECRET=your_jwt_secret_here_change_this_in_production
+
+# Session Secret
+SESSION_SECRET=some_random_secret_string
+
+# API Key for Bot
+API_KEY=holy_vouch_secure_api_key_2024_production

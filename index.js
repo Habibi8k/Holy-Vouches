@@ -25,8 +25,7 @@ app.use(express.static('public'));
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
-  saveUninitialized: false,
-  cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 } // 24 hours
+  saveUninitialized: false
 }));
 
 app.use(passport.initialize());
@@ -39,10 +38,10 @@ mongoose.connect(process.env.MONGODB_URI)
 
 // Passport Discord Strategy
 passport.use(new DiscordStrategy({
-  clientID: process.env.DISCORD_CLIENT_ID,
-  clientSecret: process.env.DISCORD_CLIENT_SECRET,
-  callbackURL: "/auth/discord/callback",
-  scope: ['identify', 'email']
+  clientID: process.env.CLIENT_ID,
+  clientSecret: process.env.CLIENT_SECRET,
+  callbackURL: process.env.REDIRECT_URI,
+  scope: ['identify', 'guilds']
 }, async (accessToken, refreshToken, profile, done) => {
   try {
     let user = await User.findOne({ discordId: profile.id });
