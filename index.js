@@ -1,5 +1,4 @@
 
-require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const session = require('express-session');
@@ -9,6 +8,15 @@ const cors = require('cors');
 const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+
+// Hardcoded configuration values
+const CLIENT_ID = 'YOUR_DISCORD_CLIENT_ID';
+const CLIENT_SECRET = 'YOUR_DISCORD_CLIENT_SECRET';
+const REDIRECT_URI = 'https://your-website-url.com/auth/discord/callback';
+const SESSION_SECRET = 'some_random_secret_string';
+const API_KEY = 'holy_vouch_secure_api_key_2024_production';
+const MONGODB_URI = 'mongodb+srv://username:password@cluster.mongodb.net/holyvouch?retryWrites=true&w=majority';
+const JWT_SECRET = 'your_jwt_secret_here_change_this_in_production';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -23,7 +31,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 app.use(session({
-  secret: process.env.SESSION_SECRET,
+  secret: SESSION_SECRET,
   resave: false,
   saveUninitialized: false
 }));
@@ -32,15 +40,15 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+mongoose.connect(MONGODB_URI)
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Passport Discord Strategy
 passport.use(new DiscordStrategy({
-  clientID: process.env.CLIENT_ID,
-  clientSecret: process.env.CLIENT_SECRET,
-  callbackURL: process.env.REDIRECT_URI,
+  clientID: CLIENT_ID,
+  clientSecret: CLIENT_SECRET,
+  callbackURL: REDIRECT_URI,
   scope: ['identify', 'guilds']
 }, async (accessToken, refreshToken, profile, done) => {
   try {
@@ -95,7 +103,7 @@ const requireAuth = (req, res, next) => {
 // Middleware to check API key for bot endpoints
 const requireApiKey = (req, res, next) => {
   const apiKey = req.headers['x-api-key'];
-  if (!apiKey || apiKey !== process.env.API_KEY) {
+  if (!apiKey || apiKey !== API_KEY) {
     return res.status(403).json({ error: 'Unauthorized - Invalid API key' });
   }
   next();
